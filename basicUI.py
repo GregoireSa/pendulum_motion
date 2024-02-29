@@ -1,5 +1,3 @@
-import math
-print(math.sin(90))
 """
 A module containing utility classes for creating text elements, buttons, and dropdowns in Pygame.
 
@@ -116,7 +114,6 @@ class Slider:
             if mouse_pos[0] >= self.bar.topleft[0] and mouse_pos[0] <= self.bar.topright[0]:
                 self.slider.center = (mouse_pos[0], self.slider.center[1])
                 self.value = round((mouse_pos[0] - self.bar.topleft[0]) / self.width, 2)
-                print(self.value)
     
     def draw(self) -> None:
         
@@ -334,16 +331,3 @@ class Dropdown:
                     pygame.draw.rect(self.surface, self.bg, box.box_rect)
                     pygame.draw.rect(self.surface, self.fg, box.box_rect, width=self.border_width)
                     self.surface.blit(box.text, box.text_rect)
-
-win = pygame.display.set_mode((500, 200))
-slider = Slider(win, (50, 50), 100, 30)
-while True:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            pygame.quit()
-            quit()
-    
-    win.fill((255, 255, 255))
-    slider.update()
-    slider.draw()
-    pygame.display.update()
