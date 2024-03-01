@@ -93,13 +93,18 @@ class Slider:
         self.width, self.height = width, height
         self.bar_colour = bar_colour
         self.slider_colour = slider_colour
-                
-        self.bar = pygame.Rect(0, 0, self.width, self.height // 2)
-        self.bar.midleft = (self.pos[0], self.pos[1] + self.height // 2)
-        self.slider = pygame.Rect(self.pos[0], self.pos[1], self.height, self.height)
-
+            
+        
+        self.bar = pygame.Rect(self.pos[0], self.pos[1] + self.height // 2, self.width, self.height // 2)
+        self.slider = pygame.Rect(self.bar[0], self.pos[1], self.height, self.height)
+        
         self.moving = False
         self.value = 0
+    
+    def set_center(self, pos):
+        
+        self.bar.center = pos
+        self.slider.center = (self.bar.topleft[0], pos[1])
     
     def update(self) -> None:
         
