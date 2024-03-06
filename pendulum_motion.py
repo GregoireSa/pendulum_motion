@@ -1,7 +1,7 @@
 import pygame
-import math
 import basicUI
 import random
+from math import cos, sin
 from time import time
 
 pygame.init()
@@ -20,6 +20,8 @@ UI_BG_COLOUR = (50, 50, 50)
 UI_ELEM_COLOUR = (100, 100, 100)
 PARTICLE_COLOUR = (255, 0, 0)
 
+g = 9.807
+
 class Particle:
 
     def __init__(self, mass_slider, radius_slider, particles, angle, force=0, colour=PARTICLE_COLOUR) -> None:
@@ -37,13 +39,17 @@ class Particle:
 
         self.angle = angle
         self.force = force
+        
+        self.tension = 0
 
         self.mass_slider = mass_slider
         self.radius_slider = radius_slider
         
+        self.min_radius = 25
+        
         self.colour = colour
-        self.center = (self.pivot[0] + (self.radius_slider.value*200*math.cos(self.angle)),
-                       self.pivot[1] + (self.radius_slider.value*200*math.sin(self.angle)))
+        self.center = (self.min_radius + self.pivot[0] + (self.radius_slider.value*200*cos(self.angle)),
+                       self.min_radius + self.pivot[1] + (self.radius_slider.value*200*sin(self.angle)))
         
     
     def draw_line(self, surface) -> None:
@@ -64,8 +70,8 @@ class Particle:
 
     def update(self) -> None:
         
-        self.center = (self.pivot[0] + (self.radius_slider.value*200*math.cos(self.angle)),
-                       self.pivot[1] + (self.radius_slider.value*200*math.sin(self.angle)))
+        self.center = (self.min_radius + self.pivot[0] + (self.radius_slider.value*200*math.cos(self.angle)),
+                       self.min_radius + self.pivot[1] + (self.radius_slider.value*200*math.sin(self.angle)))
 
         if not self.first:
             self.pivot = self.particles[self.index - 1].center
@@ -143,6 +149,15 @@ def main() -> None:
             if keys[pygame.K_DOWN]:
                 ptc.pivot = (ptc.pivot[0], ptc.pivot[1] + diff)
         
+        last_ptc = particles[-1]
+        last_ptc.tension = (last_ptc.mass*g) / cos(last_ptc.angle)
+        
+        for r in reversed(range(1, len(particles) - 2)):
+            curr_ptc = particles[r]
+            prev_ptc = particles[r + 1]
+            next_ptc = particles[r - 1]
+            curr_ptc.tension = (prev_ptc.tension*cos(curr_ptc.angle) + curr_ptc.mass) / cos(next_ptc.angle)
+            
         for slider_id in sliders:
             sliders[slider_id].update()
             

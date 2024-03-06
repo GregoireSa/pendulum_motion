@@ -74,7 +74,7 @@ def text(surface: pygame.Surface, info_text: str, pos: tuple,
         pos_type (str): The type of position specified. Default is 'center'.
             Options: 'center', 'topleft'.
     """
-    
+
     text_font = pygame.font.Font(None, size)
     info = text_font.render(info_text, True, colour)
     if pos_type == 'center':
@@ -84,47 +84,59 @@ def text(surface: pygame.Surface, info_text: str, pos: tuple,
     surface.blit(info, text_rect)
 
 class Slider:
-    
+
     def __init__(self, surface: pygame.Surface, pos: tuple, width: int, height: int,
-                 bar_colour=(150, 150, 150), slider_colour=(25, 25, 25)) -> None:
-        
+                 bar_colour: tuple = (150, 150, 150), slider_colour: tuple = (25, 25, 25),
+                 min_val: int = 0, max_val: int = 1, default: str = 'midleft') -> None:
+
         self.surface = surface
         self.pos = pos
         self.width, self.height = width, height
         self.bar_colour = bar_colour
         self.slider_colour = slider_colour
-            
-        
+
+        self.min_val = min_val
+        self.max_val = max_val
+
         self.bar = pygame.Rect(self.pos[0], self.pos[1] + self.height // 2, self.width, self.height // 2)
         self.slider = pygame.Rect(self.bar[0], self.pos[1], self.height, self.height)
-        
+
+        if default == "midleft":
+            self.slider.midleft = self.bar.midleft
+            self.value = self.min_val
+        if default == "center":
+            self.slider.center = self.bar.center
+            self.value = self.max_val // 2
+
         self.moving = False
-        self.value = 0
-    
+
     def set_center(self, pos):
-        
+
         self.bar.center = pos
         self.slider.center = (self.bar.topleft[0], pos[1])
-    
+
     def update(self) -> None:
-        
+
         mouse_pos = pygame.mouse.get_pos()
         if self.slider.collidepoint(mouse_pos) and pygame.mouse.get_pressed()[0]:
             self.moving = True
         else:
             self.moving = False
-        
+
         if self.moving:
 
             if mouse_pos[0] >= self.bar.topleft[0] and mouse_pos[0] <= self.bar.topright[0]:
+
                 self.slider.center = (mouse_pos[0], self.slider.center[1])
-                self.value = round((mouse_pos[0] - self.bar.topleft[0]) / self.width, 2)
-    
+                value_percentage = (self.slider.centerx - self.bar.left) / self.bar.width
+                self.value = round(self.min_val + value_percentage * (self.max_val - self.min_val), 2)
+
     def draw(self) -> None:
-        
+
         pygame.draw.rect(self.surface, self.bar_colour, self.bar, border_radius=3)
         pygame.draw.ellipse(self.surface, self.slider_colour, self.slider)
-    
+
+
 class Button:
     """
     Represents a clickable button element.
@@ -145,16 +157,16 @@ class Button:
         draw() -> None:
             Draws the button on the surface.
     """
-    
+
     def __init__(self, surface: pygame.Surface, button_text: str, command: Callable, pos: tuple,
                  fontsize: int=30, fg: tuple=(0, 0, 0), bg: tuple=(255, 255, 255)) -> None:
-        
+
         self.surface = surface
         self.command = command
         self.pos = pos
         self.fg, self.bg = fg, bg
         self.click_state = False
-        
+
         self.text = button_text
         self.fontsize = fontsize
         self.font = pygame.font.Font(None, self.fontsize)
@@ -166,7 +178,7 @@ class Button:
         self.info_rect.center = self.center
 
     def change_text(self, new_text: str) -> None:
-        
+
         self.text = new_text
         self.info = self.font.render(self.text, True, self.fg)
 
@@ -200,7 +212,7 @@ class _DropdownOption:
         text (pygame.Surface): The text displayed for the option.
         command (Callable): The function to execute when the option is selected.
     """
-    
+
     def __init__(self, box_rect: pygame.Rect, text_rect: pygame.Rect, option_text: str, command: Callable) -> None:
 
         self.box_rect = box_rect
@@ -313,10 +325,10 @@ class Dropdown:
         pygame.draw.rect(self.surface, self.bg, self.drop_box_rect)
         pygame.draw.rect(self.surface, self.fg, self.drop_box_rect, width=self.border_width)
         self.surface.blit(self.drop_text, self.drop_text_rect)
-        
+
         # if the dropdown is open and there are options to display
         if self.state is True and self.options:
-            
+
             # draw boxes and check for interactions
             for box in self.option_boxes:
 
