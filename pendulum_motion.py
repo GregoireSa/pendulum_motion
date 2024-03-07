@@ -19,7 +19,7 @@ UI_BG_COLOUR = (50, 50, 50)
 UI_ELEM_COLOUR = (100, 100, 100)
 PARTICLE_COLOUR = (255, 0, 0)
 
-g = 9.807
+g = 980.7
 
 class Particle:
 
@@ -69,7 +69,6 @@ class Particle:
         self.mass = self.mass_slider.value
         self.radius = self.radius_slider.value
         
-        self.angle += self.angular_vel * 0.1
         
         self.center = (self.pivot[0] + (self.radius*100*cos(self.angle)),
                        self.pivot[1] + (self.radius*100*sin(self.angle)))
@@ -139,6 +138,12 @@ def main() -> None:
                     particles[-1].angle += 0.1
                 if pygame.key.get_pressed()[pygame.K_MINUS]:
                     particles[-1].angle -= 0.1
+
+                if event.key==pygame.K_r:
+                    p1.angle=1.5707963
+                    p2.angle=1.5707963
+                    p1.acc=0
+                    p2.acc=0
         
         if particles:
             ptc = particles[0]
@@ -161,6 +166,15 @@ def main() -> None:
         
         p1.acc = ((-p1.tension*sin(p1.angle) + p2.tension*sin(p2.angle))**2 + (p1.tension*cos(p1.angle)-p1.tension*cos(p2.angle) - p1.mass*g)**2) ** 0.5 / p1.mass
         p2.acc = ((p2.tension*sin(p2.angle))**2) + ((p2.tension*cos(p2.angle) - p2.mass*g)**2)**0.5 / p2.mass
+
+        decreaseConstant=0.00001
+        #Update the  new angle into...
+        if p1.pivot[0] 
+        p1.angular_vel+=p1.acc*decreaseConstant
+        p1.angle+=p1.angular_vel*decreaseConstant
+        
+        p2.angular_vel+=p2.acc*decreaseConstant
+        p2.angle+=p2.angular_vel*decreaseConstant
 
         # p1.angular_vel = (p1.tension*cos(p1.angle) - p2.tension*cos(p2.angle) - p1.mass*g) / p1.mass*p1.radius*sin(p1.angle)
         # p2.angular_vel = (p2.tension*cos(p2.angle) - p2.mass*g) / p2.mass*p2.radius*sin(p2.angle)
