@@ -1,18 +1,17 @@
 import pygame
 import basicUI
-import random
-from math import cos, sin
-from time import time
+from math import cos, sin, tan
 
 pygame.init()
 
-width, height = 900, 600
-sim_width = 600
+width, height = 1100, 600
+sim_width = 800
 ui_width = width - sim_width
 
 win = pygame.display.set_mode((width, height))
 pygame.display.set_caption("pendulum motion")
 clock = pygame.time.Clock()
+max_fps = 60
 
 # COLOURS
 BG_COLOUR = (255, 250, 220)
@@ -20,11 +19,11 @@ UI_BG_COLOUR = (50, 50, 50)
 UI_ELEM_COLOUR = (100, 100, 100)
 PARTICLE_COLOUR = (255, 0, 0)
 
-g = 9.807
+g = 0.9807
 
 class Particle:
 
-    def __init__(self, mass_slider, radius_slider, particles, angle, force=0, colour=PARTICLE_COLOUR) -> None:
+    def __init__(self, mass_slider, radius_slider, particles, angle, colour: tuple=PARTICLE_COLOUR) -> None:
 
         if particles:
             self.first = False
@@ -38,40 +37,39 @@ class Particle:
         self.particles = particles
 
         self.angle = angle
-        self.force = force
         
         self.tension = 0
+        self.angular_vel = 0
 
         self.mass_slider = mass_slider
         self.radius_slider = radius_slider
-        
-        self.min_radius = 25
-        
+        self.mass = self.mass_slider.value
+        self.radius = self.radius_slider.value
+                
         self.colour = colour
-        self.center = (self.min_radius + self.pivot[0] + (self.radius_slider.value*200*cos(self.angle)),
-                       self.min_radius + self.pivot[1] + (self.radius_slider.value*200*sin(self.angle)))
+        self.center = (self.pivot[0] + (self.radius*cos(self.angle)),
+                        self.pivot[1] + (self.radius*sin(self.angle)))
         
     
     def draw_line(self, surface) -> None:
         
         pygame.draw.line(surface, (0, 0, 0), self.pivot, self.center, width=2)
     
+    
     def draw_particle(self, surface) -> None:
 
-        pygame.draw.circle(surface, self.colour, self.center, (self.mass_slider.value * 40) + 10)
-
-    def get_angular_velocity(self) -> None:
+        pygame.draw.circle(surface, self.colour, self.center, (self.mass) + 10)
         
-        pass
-    
-    def get_centre(self) -> None:
-        
-        pass
 
     def update(self) -> None:
         
-        self.center = (self.min_radius + self.pivot[0] + (self.radius_slider.value*200*math.cos(self.angle)),
-                       self.min_radius + self.pivot[1] + (self.radius_slider.value*200*math.sin(self.angle)))
+        self.mass = self.mass_slider.value
+        self.radius = self.radius_slider.value
+        
+        self.angle += self.angular_vel * 0.001
+        
+        self.center = (self.pivot[0] + (self.radius*200*cos(self.angle)),
+                       self.pivot[1] + (self.radius*200*sin(self.angle)))
 
         if not self.first:
             self.pivot = self.particles[self.index - 1].center
@@ -80,8 +78,8 @@ class Particle:
 text_margin = 50
 
 sliders = {}
-def new_slider(name, center) -> basicUI.Slider:
-    sld = basicUI.Slider(win, (0, 0), ui_width * 0.5, 40, slider_colour=UI_ELEM_COLOUR)
+def new_slider(name, center, min_val=1, max_val = 30) -> basicUI.Slider:
+    sld = basicUI.Slider(win, (0, 0), ui_width * 0.5, 40, slider_colour=UI_ELEM_COLOUR, min_val=min_val, max_val=max_val)
     sld.set_center(center)
     sliders.update({name: sld})
     return sld
@@ -122,7 +120,8 @@ def main() -> None:
     
     while True:
         
-        clock.tick(60)
+        pygame.display.set_caption(f"pendulum motion    fps: {int(clock.get_fps())}")
+        clock.tick(max_fps)
         
         keys = pygame.key.get_pressed()
         
@@ -148,16 +147,17 @@ def main() -> None:
                 ptc.pivot = (ptc.pivot[0], ptc.pivot[1] - diff)
             if keys[pygame.K_DOWN]:
                 ptc.pivot = (ptc.pivot[0], ptc.pivot[1] + diff)
+
         
-        last_ptc = particles[-1]
-        last_ptc.tension = (last_ptc.mass*g) / cos(last_ptc.angle)
+        p1 = particles[0]
+        p2 = particles[1]
+        p2.tension = (p2.mass*g) / cos(p2.angle)
+        p1.tension = (p2.tension*cos(p2.angle) + p2.mass+g) / cos(p1.angle)
+
+        p1.angular_vel = p2.tension*sin(p2.angle) / (p2.mass*p2.radius*cos(p2.angle))
+        p2.angular_vel = (p1.tension*cos(p2.angle) + p2.mass*g) / (p1.mass*p1.radius*sin(p1.angle))
         
-        for r in reversed(range(1, len(particles) - 2)):
-            curr_ptc = particles[r]
-            prev_ptc = particles[r + 1]
-            next_ptc = particles[r - 1]
-            curr_ptc.tension = (prev_ptc.tension*cos(curr_ptc.angle) + curr_ptc.mass) / cos(next_ptc.angle)
-            
+        
         for slider_id in sliders:
             sliders[slider_id].update()
             
