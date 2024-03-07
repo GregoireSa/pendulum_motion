@@ -19,7 +19,7 @@ UI_BG_COLOUR = (50, 50, 50)
 UI_ELEM_COLOUR = (100, 100, 100)
 PARTICLE_COLOUR = (255, 0, 0)
 
-g = 0.9807
+g = 9.807
 
 class Particle:
 
@@ -31,7 +31,10 @@ class Particle:
         else:
             self.first = True
             self.pivot = (sim_width // 2, 100)
-            
+        
+        self.vel = (0, 0)
+        self.acc = 0
+        
         particles.append(self)
         self.index = len(particles) - 1
         self.particles = particles
@@ -66,10 +69,10 @@ class Particle:
         self.mass = self.mass_slider.value
         self.radius = self.radius_slider.value
         
-        self.angle += self.angular_vel * 0.001
+        self.angle += self.angular_vel * 0.1
         
-        self.center = (self.pivot[0] + (self.radius*200*cos(self.angle)),
-                       self.pivot[1] + (self.radius*200*sin(self.angle)))
+        self.center = (self.pivot[0] + (self.radius*100*cos(self.angle)),
+                       self.pivot[1] + (self.radius*100*sin(self.angle)))
 
         if not self.first:
             self.pivot = self.particles[self.index - 1].center
@@ -78,16 +81,17 @@ class Particle:
 text_margin = 50
 
 sliders = {}
-def new_slider(name, center, min_val=1, max_val = 30) -> basicUI.Slider:
+def new_slider(name, center, min_val, max_val) -> basicUI.Slider:
     sld = basicUI.Slider(win, (0, 0), ui_width * 0.5, 40, slider_colour=UI_ELEM_COLOUR, min_val=min_val, max_val=max_val)
     sld.set_center(center)
     sliders.update({name: sld})
     return sld
     
-mass1 = new_slider("Mass 1:", (text_margin + sim_width + ui_width // 2, 100))
-radius1 = new_slider("Radius 1:", (text_margin + sim_width + ui_width // 2, 150))
-mass2 = new_slider("Mass 2:", (text_margin + sim_width + ui_width // 2, 200))
-radius2 = new_slider("Radius 2:", (text_margin + sim_width + ui_width // 2, 250))
+mass1 = new_slider("Mass 1:", (text_margin + sim_width + ui_width // 2, 100), 1, 40)
+radius1 = new_slider("Radius 1:", (text_margin + sim_width + ui_width // 2, 150), 1, 4)
+radius1.value = 2
+mass2 = new_slider("Mass 2:", (text_margin + sim_width + ui_width // 2, 200), 1, 40)
+radius2 = new_slider("Radius 2:", (text_margin + sim_width + ui_width // 2, 250), 1, 4)
 
 particles = []
 Particle(mass1, radius1, particles, 0.1)
@@ -151,11 +155,15 @@ def main() -> None:
         
         p1 = particles[0]
         p2 = particles[1]
+        
         p2.tension = (p2.mass*g) / cos(p2.angle)
-        p1.tension = (p2.tension*cos(p2.angle) + p2.mass+g) / cos(p1.angle)
+        p1.tension = (p2.tension*cos(p2.angle) + p1.mass*g) / cos(p1.angle)
+        
+        p1.acc = ((-p1.tension*sin(p1.angle) + p2.tension*sin(p2.angle))**2 + (p1.tension*cos(p1.angle)-p1.tension*cos(p2.angle) - p1.mass*g)**2) ** 0.5 / p1.mass
+        p2.acc = ((p2.tension*sin(p2.angle))**2) + ((p2.tension*cos(p2.angle) - p2.mass*g)**2)**0.5 / p2.mass
 
-        p1.angular_vel = p2.tension*sin(p2.angle) / (p2.mass*p2.radius*cos(p2.angle))
-        p2.angular_vel = (p1.tension*cos(p2.angle) + p2.mass*g) / (p1.mass*p1.radius*sin(p1.angle))
+        # p1.angular_vel = (p1.tension*cos(p1.angle) - p2.tension*cos(p2.angle) - p1.mass*g) / p1.mass*p1.radius*sin(p1.angle)
+        # p2.angular_vel = (p2.tension*cos(p2.angle) - p2.mass*g) / p2.mass*p2.radius*sin(p2.angle)
         
         
         for slider_id in sliders:
